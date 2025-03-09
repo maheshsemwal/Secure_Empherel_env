@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Ephemeral Workspace</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <i class="fas fa-shield-alt"></i>
+        <h1>Secure Ephemeral Workspace</h1>
+      </div>
+      <div class="secure-mode-toggle">
+        <span id="status-text">Secure Mode: Off</span>
+        <label class="switch">
+          <input type="checkbox" id="secure-mode-toggle">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </header>
+
+    <main>
+      <div class="dashboard">
+        <div class="status-card" id="secure-mode-card">
+          <div class="card-icon">
+            <i class="fas fa-lock"></i>
+          </div>
+          <div class="card-content">
+            <h2>Secure Mode</h2>
+            <p id="secure-mode-status">Inactive</p>
+            <p class="description">When active, all your activities are isolated and will be deleted upon logout.</p>
+          </div>
+        </div>
+
+        <div class="status-card" id="session-card">
+          <div class="card-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="card-content">
+            <h2>Session Info</h2>
+            <p id="session-time">00:00:00</p>
+            <p class="description">Time elapsed in current secure session.</p>
+          </div>
+        </div>
+
+        <div class="status-card" id="files-card">
+          <div class="card-icon">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <div class="card-content">
+            <h2>Modified Files</h2>
+            <p id="files-count">0 files</p>
+            <p class="description">Files created or modified during this session.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="files-tab">Files</button>
+        <button class="tab-btn" data-tab="cloud-tab">Cloud Sync</button>
+        <button class="tab-btn" data-tab="settings-tab">Settings</button>
+      </div>
+
+      <div class="tab-content">
+        <div id="files-tab" class="tab-pane active">
+          <div class="section-header">
+            <h2>Session Files</h2>
+            <button id="refresh-files" class="btn"><i class="fas fa-sync"></i> Refresh</button>
+          </div>
+          <div class="file-list-container">
+            <table id="file-list">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="select-all-files"></th>
+                  <th>Name</th>
+                  <th>Path</th>
+                  <th>Size</th>
+                  <th>Modified</th>
+                </tr>
+              </thead>
+              <tbody id="file-list-body">
+                <!-- Files will be populated here dynamically -->
+                <tr class="empty-state">
+                  <td colspan="5">No files have been modified in this session yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="cloud-tab" class="tab-pane">
+          <div class="section-header">
+            <h2>Cloud Sync</h2>
+          </div>
+          <div class="cloud-services">
+            <div class="cloud-service-card" id="google-drive">
+              <div class="service-icon">
+                <i class="fab fa-google-drive"></i>
+              </div>
+              <h3>Google Drive</h3>
+              <p id="google-status">Not connected</p>
+              <button class="btn connect-btn" data-service="google">Connect</button>
+            </div>
+
+            <div class="cloud-service-card" id="onedrive">
+              <div class="service-icon">
+                <i class="fab fa-microsoft"></i>
+              </div>
+              <h3>OneDrive</h3>
+              <p id="onedrive-status">Not connected</p>
+              <button class="btn connect-btn" data-service="onedrive">Connect</button>
+            </div>
+
+            <div class="cloud-service-card" id="dropbox">
+              <div class="service-icon">
+                <i class="fab fa-dropbox"></i>
+              </div>
+              <h3>Dropbox</h3>
+              <p id="dropbox-status">Not connected</p>
+              <button class="btn connect-btn" data-service="dropbox">Connect</button>
+            </div>
+          </div>
+
+          <div class="sync-section">
+            <h3>Sync Selected Files</h3>
+            <p>Select files from the Files tab and click the button below to sync them to your connected cloud service.</p>
+            <div class="sync-controls">
+              <select id="sync-service">
+                <option value="">Select a service</option>
+                <option value="google">Google Drive</option>
+                <option value="onedrive">OneDrive</option>
+                <option value="dropbox">Dropbox</option>
+              </select>
+              <button id="sync-files" class="btn primary-btn" disabled>Sync Selected Files</button>
+            </div>
+            <div id="sync-progress" class="progress-bar-container hidden">
+              <div class="progress-bar"></div>
+              <span class="progress-text">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="settings-tab" class="tab-pane">
+          <div class="section-header">
+            <h2>Settings</h2>
+          </div>
+          <div class="settings-form">
+            <div class="setting-group">
+              <h3>General Settings</h3>
+              <div class="setting-item">
+                <label for="startup-secure-mode">
+                  <span>Enable Secure Mode on startup</span>
+                  <input type="checkbox" id="startup-secure-mode">
+                </label>
+              </div>
+              <div class="setting-item">
+                <label for="minimize-to-tray">
+                  <span>Minimize to system tray when closed</span>
+                  <input type="checkbox" id="minimize-to-tray" checked>
+                </label>
+              </div>
+              <div class="setting-item">
+                <label for="hotkey-secure-mode">
+                  <span>Hotkey for toggling Secure Mode</span>
+                  <input type="text" id="hotkey-secure-mode" placeholder="Ctrl+Shift+S" readonly>
+                  <button class="btn small-btn" id="change-hotkey">Change</button>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <h3>Cleanup Settings</h3>
+              <div class="setting-item">
+                <label for="cleanup-browser-history">
+                  <span>Clean browser history</span>
+                  <input type="checkbox" id="cleanup-browser-history" checked>
+                </label>
+              </div>
+              <div class="setting-item">
+                <label for="cleanup-temp-files">
+                  <span>Clean temporary files</span>
+                  <input type="checkbox" id="cleanup-temp-files" checked>
+                </label>
+              </div>
+              <div class="setting-item">
+                <label for="cleanup-registry">
+                  <span>Clean registry changes (Windows only)</span>
+                  <input type="checkbox" id="cleanup-registry" checked>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <h3>Advanced Settings</h3>
+              <div class="setting-item">
+                <label for="isolation-level">
+                  <span>Isolation Level</span>
+                  <select id="isolation-level">
+                    <option value="high">High (Maximum Isolation)</option>
+                    <option value="medium" selected>Medium (Balanced)</option>
+                    <option value="low">Low (Better Performance)</option>
+                  </select>
+                </label>
+              </div>
+              <div class="setting-item">
+                <label for="temp-directory">
+                  <span>Temporary Directory</span>
+                  <input type="text" id="temp-directory" readonly>
+                  <button class="btn small-btn" id="change-temp-dir">Change</button>
+                </label>
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button id="save-settings" class="btn primary-btn">Save Settings</button>
+              <button id="reset-settings" class="btn">Reset to Default</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="status-bar">
+        <div id="status-message">Ready</div>
+        <div id="version">v0.1.0</div>
+      </div>
+    </footer>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2 id="modal-title">Title</h2>
+      <div id="modal-body">
+        <!-- Modal content will be inserted here -->
+      </div>
+      <div class="modal-footer">
+        <button id="modal-cancel" class="btn">Cancel</button>
+        <button id="modal-confirm" class="btn primary-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html> 

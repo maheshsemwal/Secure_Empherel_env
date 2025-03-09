@@ -1,0 +1,62 @@
+{
+  "name": "secure-ephemeral-workspace",
+  "version": "0.1.0",
+  "description": "An incognito-like mode for public computers that ensures all user activities are deleted upon logout",
+  "main": "src/frontend/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "test": "jest",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/secure-ephemeral-workspace.git"
+  },
+  "keywords": [
+    "secure",
+    "ephemeral",
+    "incognito",
+    "privacy",
+    "sandbox"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "electron-store": "^8.1.0",
+    "express": "^4.18.2",
+    "googleapis": "^128.0.0",
+    "node-powershell": "^5.0.1",
+    "sudo-prompt": "^9.2.1"
+  },
+  "devDependencies": {
+    "electron": "^27.1.0",
+    "electron-builder": "^24.6.4",
+    "jest": "^29.7.0"
+  },
+  "build": {
+    "appId": "com.yourusername.secure-ephemeral-workspace",
+    "productName": "Secure Ephemeral Workspace",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "src/frontend/assets/icon.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "src/frontend/assets/icon.png",
+      "category": "Utility"
+    }
+  }
+} 
