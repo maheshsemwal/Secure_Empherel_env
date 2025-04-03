@@ -1,4 +1,4 @@
-# Secure Ephemeral Workspace
+# Secure Ephemeral Workspace for public PC's
 
 A cross-platform application that provides an incognito-like mode for public computers, ensuring all user activities, files, and session data are deleted upon logout while still allowing access to existing software and files on the system.
 
