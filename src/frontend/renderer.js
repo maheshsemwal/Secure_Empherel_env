@@ -179,6 +179,18 @@ function setupIPCListeners() {
     updateSecureModeUI(enabled);
   });
   
+  // Add error handler for secure mode toggle
+  ipcRenderer.on('secure-mode-error', (event, errorMessage) => {
+    updateStatus(`Error: ${errorMessage}`);
+    // Revert the toggle state in the UI
+    secureModeToggle.checked = !secureModeToggle.checked;
+    isSecureModeActive = secureModeToggle.checked;
+    updateSecureModeUI(isSecureModeActive);
+    
+    // Show error modal
+    showModal('Error', `Failed to toggle Secure Mode: ${errorMessage}`, 'OK');
+  });
+  
   // File list update
   ipcRenderer.on('file-list-update', (event, files) => {
     updateFilesList(files);
@@ -239,45 +251,47 @@ function setupIPCListeners() {
 
 // Toggle secure mode
 function toggleSecureMode(enabled) {
-  isSecureModeActive = enabled;
-  
-  // Update UI
-  updateSecureModeUI(enabled);
-  
-  // Send to main process
-  ipcRenderer.send('toggle-secure-mode', enabled);
-  
-  if (enabled) {
-    // Start session timer
-    startSessionTimer();
+  try {
+    isSecureModeActive = enabled;
     
-    // Refresh files list
-    setTimeout(() => {
-      refreshFilesList();
-    }, 1000);
+    // Update UI
+    updateSecureModeUI(enabled);
     
-    updateStatus('Secure Mode activated');
-  } else {
-    // Show confirmation dialog
-    showModal(
-      'Disable Secure Mode',
-      'Are you sure you want to disable Secure Mode? All session data will be permanently deleted.',
-      'Disable',
-      () => {
-        // Stop session timer
-        stopSessionTimer();
-        
-        // Reset session data
-        resetSessionData();
-        
-        updateStatus('Secure Mode deactivated');
-      },
-      () => {
-        // User cancelled, revert toggle
-        secureModeToggle.checked = true;
-        isSecureModeActive = true;
-      }
-    );
+    // Send to main process
+    ipcRenderer.send('toggle-secure-mode', enabled);
+    
+    if (enabled) {
+      // Start session timer
+      startSessionTimer();
+      
+      // Refresh files list
+      setTimeout(() => {
+        refreshFilesList();
+      }, 1000);
+      
+      updateStatus('Secure Mode activated');
+    } else {
+      // Show confirmation dialog
+      showModal(
+        'Disable Secure Mode',
+        'Are you sure you want to disable Secure Mode? All temporary files will be cleaned up.',
+        'Disable',
+        () => {
+          // End session timer
+          stopSessionTimer();
+          resetSessionData();
+          updateStatus('Secure Mode deactivated');
+        }
+      );
+    }
+  } catch (error) {
+    console.error('Error toggling secure mode:', error);
+    updateStatus(`Error: ${error.message}`);
+    
+    // Revert the toggle state
+    secureModeToggle.checked = !secureModeToggle.checked;
+    isSecureModeActive = secureModeToggle.checked;
+    updateSecureModeUI(isSecureModeActive);
   }
 }
 

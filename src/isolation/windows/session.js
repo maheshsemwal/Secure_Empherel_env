@@ -19,6 +19,7 @@ const REGISTRY_BACKUP_FILE = path.join(TEMP_DIR, 'registry-backup.reg');
 let modifiedFiles = [];
 let isSessionActive = false;
 
+
 /**
  * Start a secure session on Windows
  * @returns {Promise<boolean>} - Whether the session was started successfully

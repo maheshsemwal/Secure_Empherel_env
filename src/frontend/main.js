@@ -45,53 +45,96 @@ function createWindow() {
 
 // Create system tray icon and menu
 function createTray() {
-  tray = new Tray(path.join(__dirname, 'assets/icon.png'));
-  const contextMenu = Menu.buildFromTemplate([
-    { 
-      label: 'Secure Mode', 
-      type: 'checkbox',
-      checked: isSecureModeActive,
-      click: () => {
-        isSecureModeActive = !isSecureModeActive;
-        mainWindow.webContents.send('secure-mode-toggle', isSecureModeActive);
-      }
-    },
-    { type: 'separator' },
-    { 
-      label: 'Show App', 
-      click: () => {
-        if (mainWindow === null) {
-          createWindow();
-        } else {
-          mainWindow.show();
-        }
-      }
-    },
-    { 
-      label: 'Exit', 
-      click: () => {
-        if (isSecureModeActive) {
-          // Perform cleanup before exit
-          cleanupSecureSession().then(() => {
-            app.quit();
-          });
-        } else {
-          app.quit();
-        }
-      }
+  try {
+    // Check if assets directory exists
+    const assetsDir = path.join(__dirname, 'assets');
+    if (!fs.existsSync(assetsDir)) {
+      fs.mkdirSync(assetsDir, { recursive: true });
+      console.log('Created missing assets directory');
     }
-  ]);
-  
-  tray.setToolTip('Secure Ephemeral Workspace');
-  tray.setContextMenu(contextMenu);
-  
-  tray.on('click', () => {
-    if (mainWindow === null) {
-      createWindow();
+    
+    // Check if icon file exists, use a fallback if not
+    const iconPath = path.join(__dirname, 'assets/icon.png');
+    if (!fs.existsSync(iconPath)) {
+      console.warn('Icon file not found, using a default icon');
+      // Create a simple 16x16 transparent icon as fallback
+      const { nativeImage } = require('electron');
+      const emptyIcon = nativeImage.createEmpty();
+      tray = new Tray(emptyIcon);
     } else {
-      mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+      tray = new Tray(iconPath);
     }
-  });
+    
+    const contextMenu = Menu.buildFromTemplate([
+      { 
+        label: 'Secure Mode', 
+        type: 'checkbox',
+        checked: isSecureModeActive,
+        click: () => {
+          isSecureModeActive = !isSecureModeActive;
+          if (mainWindow) {
+            mainWindow.webContents.send('secure-mode-toggle', isSecureModeActive);
+          }
+        }
+      },
+      { type: 'separator' },
+      { 
+        label: 'Show App', 
+        click: () => {
+          if (mainWindow === null) {
+            createWindow();
+          } else {
+            mainWindow.show();
+          }
+        }
+      },
+      { 
+        label: 'Exit', 
+        click: () => {
+          if (isSecureModeActive) {
+            // Perform cleanup before exit
+            cleanupSecureSession().then(() => {
+              app.quit();
+            });
+          } else {
+            app.quit();
+          }
+        }
+      }
+    ]);
+    
+    tray.setToolTip('Secure Ephemeral Workspace');
+    tray.setContextMenu(contextMenu);
+    
+    // Store the context menu reference directly on the tray object
+    tray.contextMenu = contextMenu;
+    
+    tray.on('click', () => {
+      if (mainWindow === null) {
+        createWindow();
+      } else {
+        mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+      }
+    });
+  } catch (error) {
+    console.error('Failed to create tray:', error);
+    // Create a minimal tray if the normal creation fails
+    try {
+      const { nativeImage } = require('electron');
+      const emptyIcon = nativeImage.createEmpty();
+      tray = new Tray(emptyIcon);
+      const simpleMenu = Menu.buildFromTemplate([
+        { label: 'Show App', click: () => mainWindow?.show() },
+        { label: 'Exit', click: () => app.quit() }
+      ]);
+      tray.setContextMenu(simpleMenu);
+      tray.contextMenu = simpleMenu;
+    } catch (fallbackError) {
+      console.error('Failed to create fallback tray:', fallbackError);
+      // Continue without tray
+      tray = null;
+    }
+  }
 }
 
 // Clean up secure session data
@@ -147,25 +190,36 @@ app.on('activate', () => {
 
 // Handle IPC messages from renderer process
 ipcMain.on('toggle-secure-mode', (event, enabled) => {
-  isSecureModeActive = enabled;
-  
-  // Update tray menu
-  const contextMenu = tray.contextMenu;
-  contextMenu.items[0].checked = isSecureModeActive;
-  tray.setContextMenu(contextMenu);
-  
-  if (enabled) {
-    // Start secure session
-    if (process.platform === 'win32') {
-      const { startWindowsSecureSession } = require('../isolation/windows/session');
-      startWindowsSecureSession();
-    } else if (process.platform === 'linux') {
-      const { startLinuxSecureSession } = require('../isolation/linux/session');
-      startLinuxSecureSession();
+  try {
+    isSecureModeActive = enabled;
+    
+    // Update tray menu with null checks
+    if (tray && tray.contextMenu) {
+      const contextMenu = tray.contextMenu;
+      if (contextMenu.items && contextMenu.items[0]) {
+        contextMenu.items[0].checked = isSecureModeActive;
+        tray.setContextMenu(contextMenu);
+      }
     }
-  } else {
-    // End secure session and clean up
-    cleanupSecureSession();
+    
+    if (enabled) {
+      // Start secure session
+      if (process.platform === 'win32') {
+        const { startWindowsSecureSession } = require('../isolation/windows/session');
+        startWindowsSecureSession();
+      } else if (process.platform === 'linux') {
+        const { startLinuxSecureSession } = require('../isolation/linux/session');
+        startLinuxSecureSession();
+      }
+    } else {
+      // End secure session and clean up
+      cleanupSecureSession();
+    }
+  } catch (error) {
+    console.error('Error in toggle-secure-mode handler:', error);
+    if (mainWindow) {
+      mainWindow.webContents.send('secure-mode-error', error.message);
+    }
   }
 });
 
