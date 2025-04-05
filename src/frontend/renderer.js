@@ -385,38 +385,7 @@ function refreshFilesList() {
 
 // Simulate file list update (for demo)
 function simulateFileListUpdate() {
-  const demoFiles = [
-    {
-      id: 1,
-      name: 'document.docx',
-      path: 'C:\\Users\\Public\\Documents\\document.docx',
-      size: 25600,
-      modified: new Date().toISOString()
-    },
-    {
-      id: 2,
-      name: 'presentation.pptx',
-      path: 'C:\\Users\\Public\\Documents\\presentation.pptx',
-      size: 1048576,
-      modified: new Date().toISOString()
-    },
-    {
-      id: 3,
-      name: 'spreadsheet.xlsx',
-      path: 'C:\\Users\\Public\\Documents\\spreadsheet.xlsx',
-      size: 51200,
-      modified: new Date().toISOString()
-    },
-    {
-      id: 4,
-      name: 'notes.txt',
-      path: 'C:\\Users\\Public\\Documents\\notes.txt',
-      size: 1024,
-      modified: new Date().toISOString()
-    }
-  ];
   
-  updateFilesList(demoFiles);
   updateStatus('File list refreshed');
 }
 
